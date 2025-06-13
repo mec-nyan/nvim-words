@@ -1,4 +1,6 @@
-function show_word()
+local ns_id = vim.api.nvim_create_namespace("WordIPA")
+
+local function show_sounds()
 	local row, col = unpack(vim.api.nvim_win_get_cursor(0))
 	local line = vim.api.nvim_get_current_line()
 
@@ -26,17 +28,22 @@ function show_word()
 	ipa = ipa:gsub("^%s+", ""):gsub("%s+$", "")
 
 	-- Format the output.
-	local text = { " " .. word .. ": " .. ipa }
+	local text = " " .. word .. ": 󰕾  " .. ipa
 
 	local buf = vim.api.nvim_create_buf(false, true)
-	vim.api.nvim_buf_set_lines(buf, 0, -1, false, text)
+	vim.api.nvim_buf_set_lines(buf, 0, -1, false, { text })
 
-	local width = #text[1]
-	local height = #text
+	local keyword_hl = vim.api.nvim_get_hl(0, { name = "Function" })
+	vim.api.nvim_set_hl(0, "WordIPAItalic", { fg = keyword_hl.fg, italic = true })
+	vim.api.nvim_buf_set_extmark(buf, ns_id, 0, 0, {
+		end_col = #word + 2, -- Include space and ":".
+		hl_group = "WordIPAItalic"
+	})
 
-	local win_width = vim.api.nvim_win_get_width(0)
-	local win_height = vim.api.nvim_win_get_height(0)
-
+	-- TODO: Improve the way we calculate the width: some symbols won't return a column count.
+	local width = #text
+	-- TODO: We'll have more lines when we include the definition.
+	local height = 1
 
 	local opts = {
 		style = "minimal",
@@ -62,4 +69,4 @@ function show_word()
 	})
 end
 
-vim.api.nvim_create_user_command("ShowWord", show_word, {})
+vim.api.nvim_create_user_command("ShowSounds", show_sounds, {})

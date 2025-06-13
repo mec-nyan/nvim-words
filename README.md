@@ -11,3 +11,11 @@ TODO:
 [ ] Handle other languages besides English.
 [ ] Add the option to play sound.
 [ ] Add `checkhealth` for dependencies.
+[ ] Setup function with options (optional keymaps).
+[ ] Visual selection to capture several words, sentences, paragraphs, etc.
+- [ ] Maybe use vim motions!
+
+
+FIX:
+
+[ ] Better column count (don't just #text)
