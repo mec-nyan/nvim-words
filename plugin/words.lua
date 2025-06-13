@@ -14,7 +14,14 @@ function show_word()
 	end
 
 	local word = line:sub(start_col + 1, end_col)
-	vim.cmd.echo("'" .. word .. "'")
+
+	local handle = io.popen("espeak-ng  --ipa " .. word)
+	local ipa = handle:read("*a")
+	handle:close()
+
+	ipa = ipa:gsub("^%s+", ""):gsub("%s+$", "")
+
+	vim.cmd.echo(string.format("'%s: %s'", word, ipa))
 end
 
 vim.api.nvim_create_user_command("ShowWord", show_word, {})
