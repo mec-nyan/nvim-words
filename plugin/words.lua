@@ -124,6 +124,45 @@ local function display(word, offset, text)
 	})
 end
 
+local function display_all(word, offset, lines)
+	local buf = vim.api.nvim_create_buf(false, true)
+	vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+
+	local keyword_hl = vim.api.nvim_get_hl(0, { name = "Function" })
+	vim.api.nvim_set_hl(0, "WordIPAItalic", { fg = keyword_hl.fg, italic = true })
+	vim.api.nvim_buf_set_extmark(buf, ns_id, 0, 0, {
+		end_col = #word + 2, -- Include space and ":".
+		hl_group = "WordIPAItalic"
+	})
+
+	local min_width = vim.fn.strdisplaywidth(lines[1])
+	local width = min_width > 40 and min_width or 40
+	local height = 5
+
+	local opts = {
+		style = "minimal",
+		relative = "cursor",
+		anchor = "NW",
+		width = width,
+		height = height,
+		row = 1,
+		col = offset,
+		border = M.opts.border,
+	}
+
+	local win = vim.api.nvim_open_win(buf, false, opts)
+
+	-- Close the win if we move the cursor.
+	vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI", "InsertEnter" }, {
+		callback = function()
+			if vim.api.nvim_win_is_valid(win) then
+				vim.api.nvim_win_close(win, true)
+			end
+		end,
+		once = true,
+	})
+end
+
 function M.show_sounds()
 	-- Get the word and the offset (the cursor may be in any part of the word).
 	local word, offset = get_word()
@@ -146,7 +185,16 @@ function M.show_definition()
 	local def = get_definition(word)
 	def = short_definition(def)
 
-	vim.cmd.echo(string.format("'%s'", def))
+	local ipa = get_IPA(word)
+
+	word = capitalise(word)
+
+	local lines = {}
+	table.insert(lines, word .. ": 󰕾  " .. ipa .. " ")
+	table.insert(lines, "")
+	table.insert(lines, def)
+
+	display_all(word, offset, lines)
 end
 
 function M.setup(opts)
