@@ -35,6 +35,28 @@ local function get_IPA(word)
 	return ipa:gsub("^%s+", ""):gsub("%s+$", "")
 end
 
+local function get_definition(word)
+	local handle = io.popen("wn " .. word .. " -over")
+	if handle == nil then
+		return "(error getting definition)"
+	end
+	local definition = handle:read("*a")
+	handle:close()
+	return definition
+end
+
+---@param definition string
+local function short_definition(definition)
+	for line in definition:gmatch("[^\r\n]+") do
+		local short_def = line:match("^%s*%d+.%s*%(?%d*%)?%s*(.*)%s*%-%-")
+		if short_def ~= nil then
+			return short_def
+		end
+	end
+	return "(not found)"
+end
+
+
 -- TODO: Get selection, senteces, paragraphs, etc.
 local function get_word()
 	local _, col = unpack(vim.api.nvim_win_get_cursor(0))
@@ -59,6 +81,8 @@ local function get_word()
 	local offset = (col - start_col + 1) * -1
 	return word, offset
 end
+
+local ns_id = vim.api.nvim_create_namespace("WordIPA")
 
 local function display(word, offset, text)
 	local buf = vim.api.nvim_create_buf(false, true)
@@ -114,6 +138,15 @@ function M.show_sounds()
 
 	-- Display the content in a floating window.
 	display(word, offset, text)
+end
+
+function M.show_definition()
+	local word, offset = get_word()
+
+	local def = get_definition(word)
+	def = short_definition(def)
+
+	vim.cmd.echo(string.format("'%s'", def))
 end
 
 function M.setup(opts)
