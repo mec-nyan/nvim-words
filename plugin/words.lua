@@ -4,6 +4,18 @@ local function capitalise(word)
 	return (word:gsub("^%l", string.upper))
 end
 
+local function get_IPA(word)
+	-- Get the pronunciation using `espeak`.
+	local handle = io.popen("espeak-ng -q --ipa " .. word)
+	if handle == nil then
+		return "(error getting IPA)"
+	end
+	local ipa = handle:read("*a")
+	handle:close()
+
+	return ipa:gsub("^%s+", ""):gsub("%s+$", "")
+end
+
 local function show_sounds()
 	local row, col = unpack(vim.api.nvim_win_get_cursor(0))
 	local line = vim.api.nvim_get_current_line()
@@ -25,12 +37,7 @@ local function show_sounds()
 	local word = line:sub(start_col + 1, end_col)
 	word = capitalise(word)
 
-	-- Get the pronunciation using `espeak`.
-	local handle = io.popen("espeak-ng -q --ipa " .. word)
-	local ipa = handle:read("*a")
-	handle:close()
-
-	ipa = ipa:gsub("^%s+", ""):gsub("%s+$", "")
+	local ipa = get_IPA(word)
 
 	-- Format the output.
 	local text = " " .. word .. ": 󰕾  " .. ipa .. " "
