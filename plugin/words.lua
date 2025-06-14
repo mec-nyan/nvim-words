@@ -1,5 +1,9 @@
 local ns_id = vim.api.nvim_create_namespace("WordIPA")
 
+local function capitalise(word)
+	return (word:gsub("^%l", string.upper))
+end
+
 local function show_sounds()
 	local row, col = unpack(vim.api.nvim_win_get_cursor(0))
 	local line = vim.api.nvim_get_current_line()
@@ -19,6 +23,7 @@ local function show_sounds()
 
 	-- Get the word.
 	local word = line:sub(start_col + 1, end_col)
+	word = capitalise(word)
 
 	-- Get the pronunciation using `espeak`.
 	local handle = io.popen("espeak-ng -q --ipa " .. word)
@@ -28,7 +33,7 @@ local function show_sounds()
 	ipa = ipa:gsub("^%s+", ""):gsub("%s+$", "")
 
 	-- Format the output.
-	local text = " " .. word .. ": 󰕾  " .. ipa
+	local text = " " .. word .. ": 󰕾  " .. ipa .. " "
 
 	local buf = vim.api.nvim_create_buf(false, true)
 	vim.api.nvim_buf_set_lines(buf, 0, -1, false, { text })
@@ -41,7 +46,7 @@ local function show_sounds()
 	})
 
 	-- TODO: Improve the way we calculate the width: some symbols won't return a column count.
-	local width = #text
+	local width = vim.fn.strdisplaywidth(text)
 	-- TODO: We'll have more lines when we include the definition.
 	local height = 1
 
