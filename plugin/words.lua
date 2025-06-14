@@ -16,8 +16,9 @@ local function get_IPA(word)
 	return ipa:gsub("^%s+", ""):gsub("%s+$", "")
 end
 
-local function show_sounds()
-	local row, col = unpack(vim.api.nvim_win_get_cursor(0))
+-- TODO: Get selection, senteces, paragraphs, etc.
+local function get_word()
+	local _, col = unpack(vim.api.nvim_win_get_cursor(0))
 	local line = vim.api.nvim_get_current_line()
 
 	-- Find the boundaries of the word.
@@ -35,13 +36,12 @@ local function show_sounds()
 
 	-- Get the word.
 	local word = line:sub(start_col + 1, end_col)
-	word = capitalise(word)
 
-	local ipa = get_IPA(word)
+	local offset = (col - start_col + 1) * -1
+	return word, offset
+end
 
-	-- Format the output.
-	local text = " " .. word .. ": 󰕾  " .. ipa .. " "
-
+local function display(word, offset, text)
 	local buf = vim.api.nvim_create_buf(false, true)
 	vim.api.nvim_buf_set_lines(buf, 0, -1, false, { text })
 
@@ -52,8 +52,8 @@ local function show_sounds()
 		hl_group = "WordIPAItalic"
 	})
 
-	-- TODO: Improve the way we calculate the width: some symbols won't return a column count.
 	local width = vim.fn.strdisplaywidth(text)
+
 	-- TODO: We'll have more lines when we include the definition.
 	local height = 1
 
@@ -64,14 +64,14 @@ local function show_sounds()
 		width = width,
 		height = height,
 		row = 1,
-		col = (col - start_col + 1) * -1,
+		col = offset,
 		border = "single",
 	}
 
 	local win = vim.api.nvim_open_win(buf, false, opts)
 
 	-- Close the win if we move the cursor.
-	vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI" }, {
+	vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI", "InsertEnter" }, {
 		callback = function()
 			if vim.api.nvim_win_is_valid(win) then
 				vim.api.nvim_win_close(win, true)
@@ -79,6 +79,22 @@ local function show_sounds()
 		end,
 		once = true,
 	})
+end
+
+local function show_sounds()
+	-- Get the word and the offset (the cursor may be in any part of the word).
+	local word, offset = get_word()
+
+	-- Get the IPA representation of the sounds.
+	local ipa = get_IPA(word)
+
+	-- Format the output.
+	word = capitalise(word)
+
+	local text = " " .. word .. ": 󰕾  " .. ipa .. " "
+
+	-- Display the content in a floating window.
+	display(word, offset, text)
 end
 
 vim.api.nvim_create_user_command("ShowSounds", show_sounds, {})
