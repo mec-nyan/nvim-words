@@ -1,3 +1,22 @@
+local M = {}
+
+M.opts = {
+	border = "single",
+	-- TODO: implement the following options.
+	padding = {
+		top = 1,
+		right = 2,
+		bottom = 1,
+		left = 2,
+	},
+	position = "below", -- or "above"
+	play_sound = false,
+	language = "EN_UK",
+	show_IPA = true,
+	show_definitions = true,
+	offline = true,
+}
+
 local ns_id = vim.api.nvim_create_namespace("WordIPA")
 
 local function capitalise(word)
@@ -65,7 +84,7 @@ local function display(word, offset, text)
 		height = height,
 		row = 1,
 		col = offset,
-		border = "single",
+		border = M.opts.border,
 	}
 
 	local win = vim.api.nvim_open_win(buf, false, opts)
@@ -81,7 +100,7 @@ local function display(word, offset, text)
 	})
 end
 
-local function show_sounds()
+function M.show_sounds()
 	-- Get the word and the offset (the cursor may be in any part of the word).
 	local word, offset = get_word()
 
@@ -97,4 +116,11 @@ local function show_sounds()
 	display(word, offset, text)
 end
 
-vim.api.nvim_create_user_command("ShowSounds", show_sounds, {})
+function M.setup(opts)
+	opts = opts or {}
+	if opts.border ~= nil then
+		M.opts.border = opts.border
+	end
+end
+
+return M
