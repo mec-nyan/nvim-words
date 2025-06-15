@@ -18,8 +18,6 @@ M.opts = {
 	bubble_width = 40,
 }
 
-local ns_id = vim.api.nvim_create_namespace("WordIPA")
-
 ---Make first letter uppercase.
 ---@param word string
 ---@return string
